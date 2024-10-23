@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>部署模型 - {{ sample_name }}</title>
+    <style>
+        /* 您現有的樣式 */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f6f9;
+            margin: 0;
+            padding: 20px;
+        }
+        h1 {
+            color: #333;
+            font-size: 2em;
+            text-align: center;
+        }
+        .container {
+            max-width: 600px;
+            margin: auto;
+            background: #fff;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        ul {
+            list-style-type: none;
+            padding: 0;
+        }
+        ul li {
+            background: #ffdddd;
+            margin-bottom: 10px;
+            padding: 10px;
+            border-left: 6px solid #f44336;
+            border-radius: 4px;
+            font-size: 1.1em;
+        }
+        form {
+            text-align: center;
+            margin-top: 20px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 12px 25px;
+            border: none;
+            border-radius: 4px;
+            font-size: 1.1em;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        a {
+            display: block;
+            text-align: center;
+            margin-top: 20px;
+            color: #007BFF;
+            text-decoration: none;
+            font-size: 1.1em;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+        .links {
+            margin-top: 30px;
+            text-align: center;
+        }
+        .links a {
+            display: inline-block;
+            margin: 10px 20px;
+            padding: 10px 20px;
+            background-color: #1d72b8;
+            color: #fff;
+            border-radius: 5px;
+            text-decoration: none;
+            font-size: 1.1em;
+            transition: background-color 0.3s ease;
+        }
+        .links a:hover {
+            background-color: #155d8b;
+        }
+        #logs {
+            white-space: pre-wrap;
+            background-color: #000;
+            color: #fff;
+            padding: 10px;
+            margin-top: 20px;
+            height: 400px;
+            overflow-y: scroll;
+            font-family: monospace;
+            font-size: 0.9em;
+        }
+        .completed-message {
+            margin-top: 20px;
+            font-size: 1.2em;
+            color: green;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>部署模型 - {{ sample_name }}</h1>
+
+        {% with messages = get_flashed_messages() %}
+          {% if messages %}
+            <ul>
+            {% for message in messages %}
+              <li>{{ message }}</li>
+            {% endfor %}
+            </ul>
+          {% endif %}
+        {% endwith %}
+
+        <form id="deploy-form">
+            <button type="button" onclick="startDeployment()">部署模型</button>
+        </form>
+
+        <!-- 日誌顯示區域 -->
+        <div id="logs"></div>
+
+        <!-- 部署完成訊息 -->
+        <div class="completed-message" id="completed-message" style="display: none;">
+            部署完成！
+        </div>
+
+        <!-- 連結按鈕 -->
+        <div class="links" id="links" style="display: none;">
+            <a href="http://192.168.50.15:8080/models?page=1" target="_blank">前往 CVAT 部署頁面</a>
+            <a href="http://192.168.50.15:8070/projects/cvat/functions" target="_blank">前往 nuctl 頁面</a>
+        </div>
+
+        <a href="{{ url_for('view_yaml', sample_name=sample_name) }}">查看目前的 function-gpu.yaml</a>
+        <a href="{{ url_for('index') }}">返回首頁</a>
+
+        <script>
+            function startDeployment() {
+                var logsDiv = document.getElementById('logs');
+                var completedMessage = document.getElementById('completed-message');
+                var linksDiv = document.getElementById('links');
+
+                logsDiv.innerHTML = ''; // 清除之前的日誌
+                completedMessage.style.display = 'none';
+                linksDiv.style.display = 'none';
+
+                var source = new EventSource("{{ url_for('deploy_logs', sample_name=sample_name) }}");
+
+                source.onmessage = function(event) {
+                    logsDiv.innerHTML += event.data + '\n';
+                    logsDiv.scrollTop = logsDiv.scrollHeight;
+                };
+
+                source.addEventListener('done', function(event) {
+                    logsDiv.innerHTML += event.data + '\n';
+                    logsDiv.scrollTop = logsDiv.scrollHeight;
+                    source.close(); // 部署完成，關閉連接
+
+                    if (event.data.includes('部署成功')) {
+                        completedMessage.style.display = 'block';
+                        linksDiv.style.display = 'block';
+                    } else {
+                        completedMessage.style.display = 'block';
+                        completedMessage.style.color = 'red';
+                        completedMessage.textContent = '部署失敗！';
+                    }
+                }, false);
+
+                source.onerror = function(event) {
+                    console.error("EventSource failed.", event);
+                    source.close();
+                };
+            }
+        </script>
+    </div>
+</body>
+</html>

@@ -1,0 +1,32 @@
+version: '3.8'
+
+services:
+  cvat_upload_model:
+    image: danlee01633060/cvat_upload_model:latest
+    container_name: cvat_upload_model
+    restart: always
+    ports:
+      - "15037:15037"
+    shm_size: 32g
+    build:
+      context: . # 指定 Dockerfile 所在的目錄（此處為當前目錄）
+      dockerfile: Dockerfile # 可選：如果 Dockerfile 名稱或位置不同，請指定
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+    volumes:
+      # 將本機的專案目錄掛載到容器中的 /app 目錄
+      - ./:/app
+      # 將本機的 /autotrain 目錄掛載到容器中的 /app/dataset 目錄
+      - /autotrain:/app/dataset
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /usr/bin/docker:/usr/bin/docker
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [ gpu ]
+    # command: tail -f /dev/null
+    command: bash -c "cd /app && python3 app.py"
+    # docker compose build && docker compose up -d

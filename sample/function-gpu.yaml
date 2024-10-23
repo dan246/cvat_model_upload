@@ -1,0 +1,57 @@
+metadata:
+  annotations:
+    framework: pytorch
+    name: sample_name
+    spec: |
+      [
+        { "id": 1, "name": "sample_lable1"},
+        { "id": 2, "name": "sample_lable2" }
+      ]    
+    type: detector
+  name: sample_name
+  namespace: cvat
+spec:
+  build:
+    baseImage: nvidia/cuda:11.6.1-devel-ubuntu20.04
+    directives:
+      preCopy:
+      - kind: ENV
+        value: DEBIAN_FRONTEND=noninteractive
+      - kind: RUN
+        value: apt-get update && apt-get -y install curl git python3 python3-pip
+      - kind: RUN
+        value: apt-get -y install libgl1-mesa-glx libglib2.0-dev
+      - kind: WORKDIR
+        value: /opt/nuclio
+      - kind: RUN
+        value: pip3 install ultralytics==8.2.74 opencv-python==4.10.0.82 numpy==1.24.3
+          requests torchvision Pillow supervision scikit-image
+      - kind: RUN
+        value: ln -s /usr/bin/pip3 /usr/local/bin/pip
+      - kind: RUN
+        value: ln -s /usr/bin/python3 /usr/local/bin/python
+      - kind: RUN
+        value: apt-get update && apt-get install -y wget
+      - kind: RUN
+        value: wget https://ftpweb.intemotech.com/autotrain/Safty_1280_E1000_yolov10s_20240907_V1/weights/best.pt
+    image: sample_name
+  description: sample_name
+  eventTimeout: 30s
+  handler: main:handler
+  platform:
+    attributes:
+      mountMode: volume
+      restartPolicy:
+        maximumRetryCount: 3
+        name: always
+  resources:
+    limits:
+      nvidia.com/gpu: 1
+  runtime: python:3.9
+  triggers:
+    myHttpTrigger:
+      attributes:
+        maxRequestBodySize: 33554432
+      kind: http
+      maxWorkers: 1
+      workerAvailabilityTimeoutMilliseconds: 10000

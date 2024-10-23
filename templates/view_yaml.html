@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>查看 YAML 檔案 - {{ sample_name }}</title>
+    <style>
+        body {
+            font-family: Consolas, monospace;
+            background-color: #f0f3f5;
+            margin: 0;
+            padding: 20px;
+        }
+        h1 {
+            color: #34495e;
+            font-size: 2em;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: auto;
+            background: #fff;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        pre {
+            background-color: #2d3748;
+            color: #f7fafc;
+            padding: 20px;
+            border-radius: 5px;
+            overflow-x: auto;
+            font-size: 1.1em;
+        }
+        a {
+            display: block;
+            text-align: center;
+            margin-top: 20px;
+            color: #1d72b8;
+            text-decoration: none;
+            font-size: 1.1em;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>function-gpu.yaml 內容 - {{ sample_name }}</h1>
+        <pre>{{ yaml_content }}</pre>
+        <a href="{{ url_for('deploy', sample_name=sample_name) }}">返回部署頁面</a>
+    </div>
+</body>
+</html>
